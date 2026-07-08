@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: autoschallenge_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: supersecret
+      POSTGRES_DB: AutosDb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - autos_network
+    restart: unless-stopped
+
+  api:
+    image: autoschallenge-api
+    build:
+      context: .
+      dockerfile: AutosChallenge.Api/Dockerfile
+    container_name: autoschallenge_api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=db;Database=AutosDb;Username=postgres;Password=supersecret
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    networks:
+      - autos_network
+
+volumes:
+  postgres_data:
+
+networks:
+  autos_network:
+    driver: bridge
